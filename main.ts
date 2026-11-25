@@ -5,7 +5,7 @@
 // have replaced an entire pointless meeting. Deterministic, no network,
 // no input, no dependencies. Node 22 runs this TypeScript file as-is.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 // Brainstormed candidates (judged against the brief: kill the meeting
@@ -48,7 +48,14 @@ function main(): void {
 
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, LINE, "utf8");
-  console.log(`wrote ${chars} characters to ${OUT}`);
+  // Parent revision: verify the write round-tripped exactly — the grader
+  // reads this file, so a silent partial write must fail loudly here.
+  const written = readFileSync(OUT, "utf8");
+  if (written !== LINE) {
+    throw new Error("entry.txt does not match the validated line");
+  }
+  const bytes = Buffer.byteLength(LINE, "utf8");
+  console.log(`wrote ${chars} characters (${bytes} bytes) to ${OUT}`);
 }
 
 main();
